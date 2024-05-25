@@ -9,7 +9,7 @@ router.get('/getTasks', function (req, res, next) {
 
 router.post('/addTask', function (req, res, next) {
     let timestamp = Date.now() + Math.random();
-    if (req.body && req.body.name && req.body.description && req.body.date) {
+    if (req.body && req.body.nombre && req.body.descripcion && req.body.fecha) {
         req.body.id = timestamp;
         tasks.push(req.body);
         res.status(200).json(tasks);
