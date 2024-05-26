@@ -13,7 +13,42 @@ var goalRouter = require('./routes/goal');
 
 var app = express();
 
-// view engine setup
+const db = require('./db');
+const dbUser = require('./db_use');
+
+async function initializeDatabase() {
+  try {
+    await db.query('CREATE DATABASE IF NOT EXISTS todoeg');
+    await db.query('USE todoeg');
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT NOT NULL,
+        fecha DATE NOT NULL
+      )
+    `);
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS goals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL,
+        descripcion TEXT NOT NULL,
+        fecha DATE NOT NULL
+      )
+    `);
+
+    console.log('Database and tables created successfully!');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+  } finally {
+    db.end();
+  }
+}
+
+initializeDatabase();
+
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
@@ -39,18 +74,14 @@ app.use('/users', usersRouter);
 app.use('/task', taskRouter);
 app.use('/goal', goalRouter);
 
-// catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
 });
 
-// error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
   res.status(err.status || 500);
   res.render('error');
 });
