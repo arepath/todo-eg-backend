@@ -1,32 +1,44 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const db = require('../db_use');
 
-let tasks = [];
-
-router.get('/getTasks', function (req, res, next) {
-    res.status(200).json(tasks);
+router.get('/getTasks', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM tasks');
+    res.status(200).json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-router.post('/addTask', function (req, res, next) {
-    let timestamp = Date.now() + Math.random();
-    if (req.body && req.body.name && req.body.description && req.body.date) {
-        req.body.id = timestamp;
-        tasks.push(req.body);
-        res.status(200).json(tasks);
-    }else{
-        res.status(400).json({error: 'Parametros incompletos'});
-    }
+router.post('/addTask', async (req, res) => {
+  const { nombre, descripcion, fecha } = req.body;
+  if (!nombre || !descripcion || !fecha) {
+    return res.status(400).json({ error: 'Parámetros incompletos' });
+  }
+
+  try {
+    await db.query('INSERT INTO tasks (nombre, descripcion, fecha) VALUES (?, ?, ?)', [nombre, descripcion, fecha]);
+    const [rows] = await db.query('SELECT * FROM tasks');
+    res.status(200).json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-router.delete('/deleteTask/:id', function (req, res, next) {
-    if(req.params && req.params.id){
-        let id = req.params.id;
-        tasks = tasks.filter(task => task.id != id);
-        res.status(200).json(tasks)
-    }else{
-        res.status(400).json({error: 'Parametros incompletos'});
-    }
-});
+router.delete('/deleteTask/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ error: 'Parámetros incompletos' });
+  }
 
+  try {
+    await db.query('DELETE FROM tasks WHERE id = ?', [id]);
+    const [rows] = await db.query('SELECT * FROM tasks');
+    res.status(200).json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 module.exports = router;
